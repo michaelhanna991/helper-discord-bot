@@ -38,79 +38,91 @@ discord_bot_secret = os.getenv("DISCORD_BOT_SECRET")
 
 dexcom = Dexcom(username=dex_email, password=dex_password)
 
-@bot.tree.command(name="texttest", description="say what you wanna say")
-@app_commands.allowed_installs(guilds=True, users=True)
-@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-async def texttest(interaction: discord.Interaction, text: str):
-    await interaction.response.send_message(f"{text}", ephemeral=False)
-
-
-@bot.tree.command(name="bloodsugar", description="michael's current blood sugar")
+@bot.tree.command(name="bloodsugar", description="my current blood sugar")
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def bloodsugar(interaction: discord.Interaction, hide: bool):
      try:
-             if dexcom.get_current_glucose_reading() is not None:
-               print(dexcom.get_current_glucose_reading())
-               current = dexcom.get_current_glucose_reading().value
-               previous = dexcom.get_glucose_readings(10, 2)[1]
-               trend = dexcom.get_current_glucose_reading().trend_arrow
-               bs_level = {}
-               base_msg = f"current bloodsugar: {current}\ncurrent trend: {trend}\nprevious bs: {previous.value}"
-               
-               is_special = any(special.get("value") == current for special in special_values.values())
-                    
-     
-               if not is_special:
-                    for level in bloodsugar_levels:
-                         if bloodsugar_levels[level]["upper"] <= current >= bloodsugar_levels[level]["lower"]:
-                              bs_level = bloodsugar_levels[level]
-                              print(bs_level)
-                    await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
+             with open("allowedusers.txt", encoding="utf-8") as allowed_users:
+               allowed_user_ids = {
+                    int(line.strip())
+                    for line in allowed_users
+                    if line.strip()}
+
+               if interaction.user.id not in allowed_user_ids:
+                    await interaction.response.send_message("User not allowed", ephemeral=True)
+                    return
                else:
-                    for special in special_values:
-                         if current == special_values[special]["value"]:
-                              bs_level = special_values[special]
+                    if dexcom.get_current_glucose_reading() is not None:
+                         print(dexcom.get_current_glucose_reading())
+                         current = dexcom.get_current_glucose_reading().value
+                         previous = dexcom.get_glucose_readings(10, 2)[1]
+                         trend = dexcom.get_current_glucose_reading().trend_arrow
+                         bs_level = {}
+                         base_msg = f"current bloodsugar: {current}\ncurrent trend: {trend}\nprevious bs: {previous.value}"
+                         
+                         is_special = any(special.get("value") == current for special in special_values.values())
+                              
+                         if not is_special:
+                              for level in bloodsugar_levels:
+                                   if bloodsugar_levels[level]["upper"] <= current >= bloodsugar_levels[level]["lower"]:
+                                        bs_level = bloodsugar_levels[level]
+                                        print(bs_level)
                               await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
-                              break
-             else:
-                 await interaction.response.send_message(f"sensor not detected", ephemeral=hide)
+                         else:
+                              for special in special_values:
+                                   if current == special_values[special]["value"]:
+                                        bs_level = special_values[special]
+                                        await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
+                                        break
+                    else:
+                         await interaction.response.send_message(f"sensor not detected or user not allowed", ephemeral=hide)
      except Exception as e:
-                 print(e)
-                 await interaction.response.send_message(f"something went wrong", ephemeral=True)
-@bot.tree.command(name="bs", description="michael's current blood sugar")
+               print(e)
+               await interaction.response.send_message(f"something went wrong", ephemeral=True)
+             
+@bot.tree.command(name="bs", description="my current blood sugar")
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def bs(interaction: discord.Interaction, hide: bool):
      try:
-        if dexcom.get_current_glucose_reading() is not None:
-          print(dexcom.get_current_glucose_reading())
-          current = dexcom.get_current_glucose_reading().value
-          previous = dexcom.get_glucose_readings(10, 2)[1]
-          trend = dexcom.get_current_glucose_reading().trend_arrow
-          bs_level = {}
-          base_msg = f"current bloodsugar: {current}\ncurrent trend: {trend}\nprevious bs: {previous.value}"
-          
-          is_special = any(special.get("value") == current for special in special_values.values())
-               
+             with open("allowedusers.txt", encoding="utf-8") as allowed_users:
+               allowed_user_ids = {
+                    int(line.strip())
+                    for line in allowed_users
+                    if line.strip()}
 
-          if not is_special:
-               for level in bloodsugar_levels:
-                    if bloodsugar_levels[f"{level}"]["upper"] <= current >= bloodsugar_levels[f"{level}"]["lower"]:
-                         bs_level = bloodsugar_levels[f"{level}"]
-                         print(bs_level)
-               await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
-          else:
-               for special in special_values:
-                    if current == special_values[special]["value"]:
-                         bs_level = special_values[special]
-                         await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
-                         break
-        else:
-            await interaction.response.send_message(f"sensor is either off or like broken sorry guppy", ephemeral=hide)
+               if interaction.user.id not in allowed_user_ids:
+                    await interaction.response.send_message("User not allowed", ephemeral=True)
+                    return
+               else:
+                    if dexcom.get_current_glucose_reading() is not None:
+                         print(dexcom.get_current_glucose_reading())
+                         current = dexcom.get_current_glucose_reading().value
+                         previous = dexcom.get_glucose_readings(10, 2)[1]
+                         trend = dexcom.get_current_glucose_reading().trend_arrow
+                         bs_level = {}
+                         base_msg = f"current bloodsugar: {current}\ncurrent trend: {trend}\nprevious bs: {previous.value}"
+                         
+                         is_special = any(special.get("value") == current for special in special_values.values())
+                              
+                         if not is_special:
+                              for level in bloodsugar_levels:
+                                   if bloodsugar_levels[level]["upper"] <= current >= bloodsugar_levels[level]["lower"]:
+                                        bs_level = bloodsugar_levels[level]
+                                        print(bs_level)
+                              await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
+                         else:
+                              for special in special_values:
+                                   if current == special_values[special]["value"]:
+                                        bs_level = special_values[special]
+                                        await interaction.response.send_message(f"{base_msg}\n{bs_level["msg"]}", ephemeral=hide)
+                                        break
+                    else:
+                         await interaction.response.send_message(f"sensor not detected or user not allowed", ephemeral=hide)
      except Exception as e:
-            print(e)
-            await interaction.response.send_message(f"something went wrong lol.", ephemeral=True)
+               print(e)
+               await interaction.response.send_message(f"something went wrong", ephemeral=True)
 
 @bot.tree.command(name="mcsr", description="minecraft speedrunning ranked stats for me today")
 @app_commands.allowed_installs(guilds=True, users=True)
